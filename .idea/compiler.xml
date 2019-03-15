@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="AWSCSE546P1" />
+        <module name="AWSCSE546Project1" />
       </profile>
     </annotationProcessing>
   </component>

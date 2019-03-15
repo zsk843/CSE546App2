@@ -1,38 +1,46 @@
+import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.simpledb.model.GetAttributesRequest;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClient;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.*;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
-import java.util.List;
+
+import java.util.*;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.RunInstancesRequest;
-import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.StartInstancesRequest;
-import com.amazonaws.services.ec2.model.StopInstancesRequest;
-
-
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AWSScaling{
     private static final String QUEUE_NAME = "bbQueue";
+    private static final int MAX_NUM_INSTANCES = 5;
 
     private List<String> appList = new ArrayList<String>();
     private Map<String, Boolean> status = new HashMap<String, Boolean>();
+    private static String IMAGE_ID = "ami-0b30c5f01b371639f";
 
-    public void createinstance() {
+    public void scaleApplication() {
 
         final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+        int queueSize = getSQSLength();
+        int requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
+
+        List<Instance> instances = this.getAllInstances();
+        int runningNum = 0;
+        List<Instance> stoppedInstance = new LinkedList<Instance>();
+        for(Instance i: instances){
+            String stateName = i.getState().getName().toLowerCase();
+            if(stateName.equals( "running"))
+                runningNum ++;
+            else if(stateName.equals("stopping")|| stateName.equals("stopped"))
+                instances.add(i);
+        }
+
+
 
         System.out.println("create an instance");
 
-        String imageId = "ami-0b30c5f01b371639f";  //image id of the instance
+          //image id of the instance
         int minInstanceCount = 1; //create 1 instance
         int maxInstanceCount = 1;
 
@@ -100,12 +108,40 @@ public class AWSScaling{
 
     }
 
+    public List<Instance> getAllInstances(){
+
+        AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
+
+        List<Instance> instances = new ArrayList<Instance>();
+
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        while (true) {
+
+            DescribeInstancesResult response = ec2.describeInstances(request);
+            for (Reservation rev: response.getReservations()) {
+                instances.addAll(rev.getInstances());
+            }
+
+            request.setNextToken(response.getNextToken());
+            if (response.getNextToken() == null)
+                break;
+
+        }
+
+        return instances;
+
+
+    }
+
     public static void main(String[] args)
     {
         AWSScaling sqsExample = new AWSScaling();
         //sqsExample.createQueue();
-       sqsExample.sendMsg();
-       sqsExample.sendMsg();
+//       sqsExample.sendMsg();
+//       sqsExample.sendMsg();
+        sqsExample.getInstancesDes();
+
+
        
 
     }
