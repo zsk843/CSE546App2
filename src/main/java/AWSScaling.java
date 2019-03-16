@@ -94,15 +94,15 @@ public class AWSScaling{
 //        }
 //    }
 
-//    public void sendMsg() {
-//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-//        SendMessageRequest send_msg_request = new SendMessageRequest()
-//                .withQueueUrl(queueUrl)
-//                .withMessageBody("hello world");
-//        sqs.sendMessage(send_msg_request);
-//        System.out.println("send a msg");
-//    }
+    public void sendMsg() {
+        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+        SendMessageRequest send_msg_request = new SendMessageRequest()
+                .withQueueUrl(queueUrl)
+                .withMessageBody("hello world");
+        sqs.sendMessage(send_msg_request);
+        System.out.println("send a msg");
+    }
 
 //    public void receiveMsg() {
 //        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
@@ -157,7 +157,11 @@ public class AWSScaling{
     public static void main(String[] args)
     {
         AWSScaling sqsExample = new AWSScaling();
-        sqsExample.scaleApplication();
+        sqsExample.sendMsg();
+        sqsExample.sendMsg();
+        sqsExample.sendMsg();
+        sqsExample.sendMsg();
+        sqsExample.sendMsg();
 
 
        
