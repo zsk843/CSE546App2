@@ -35,7 +35,7 @@ public class SQSassistant {
 
     public static void main(String args[]){
         SQSassistant obj = new SQSassistant();
-        obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "Hello World");
+        obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "New Message For Test!!!!");
         List<Message> mylist = obj.getMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", 1);
         System.out.println(mylist.get(0).getBody().toString());
         obj.deleteMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue",mylist.get(0).getReceiptHandle());
