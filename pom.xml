@@ -7,44 +7,6 @@
     <groupId>AWSCSE546P1</groupId>
     <artifactId>AWSCSE546P1</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <appendAssemblyId>false</appendAssemblyId>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <!-- 此处指定main方法入口的class -->
-                            <mainClass>ScaleDownTest</mainClass>
-                        </manifest>
-                    </archive>
-                    </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assembly</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-        </plugins>
-    </build>
     <dependencies>
         <dependency>
             <groupId>com.amazonaws</groupId>
@@ -52,11 +14,6 @@
             <version>1.11.517</version>
         </dependency>
     </dependencies>
-
-
-
-
-
 
 
 </project>

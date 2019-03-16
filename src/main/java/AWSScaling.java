@@ -19,7 +19,6 @@ public class AWSScaling{
     private AmazonEC2 ec2;
 
     public AWSScaling(){
-
         ec2 = AmazonEC2ClientBuilder.defaultClient();
     }
 
@@ -121,7 +120,7 @@ public class AWSScaling{
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
         GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(QUEUE_NAME);
         GetQueueAttributesResult res = sqs.getQueueAttributes(request);
-        java.util.Map<java.lang.String, java.lang.String> res_s = res.getAttributes();
+        Map<String,String> res_s = res.getAttributes();
         return Integer.parseInt(res_s.get("ApproximateNumberOfMessages"));
 
     }
