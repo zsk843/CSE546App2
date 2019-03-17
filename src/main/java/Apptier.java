@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
 
 
 public class Apptier {
@@ -114,11 +115,25 @@ public class Apptier {
                 app.s3.upload(app.sqs.requestBody, fname);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
+                BufferedReader bufrIn= new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
+                BufferedReader bufrError = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
+                StringBuilder result = new StringBuilder();
                 try {
                     String command = "/home/ubuntu/darknet/darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg " + weight_path +" "
                             + dir + "/" + fname + "  -dont_show > result";
                     process = Runtime.getRuntime().exec(command);
                     process.waitFor();
+
+
+                    // 读取输出
+                    String line = null;
+                    while ((line = bufrIn.readLine()) != null) {
+                        result.append(line).append('\n');
+                    }
+                    while ((line = bufrError.readLine()) != null) {
+                        result.append(line).append('\n');
+                    }
+                    System.out.println(result.toString());
                     process = Runtime.getRuntime().exec("python " + dir + "/darknet.py");
                     process.waitFor();
                     BufferedReader reader = new BufferedReader(new FileReader(dir + "/result_label"));
