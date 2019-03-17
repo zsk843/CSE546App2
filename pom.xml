@@ -27,7 +27,7 @@
                     <archive>
                         <manifest>
                             <!-- 此处指定main方法入口的class -->
-                            <mainClass>Apptire</mainClass>
+                            <mainClass>Apptier</mainClass>
                         </manifest>
                     </archive>
                     </configuration>
