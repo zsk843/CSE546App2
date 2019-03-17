@@ -50,15 +50,16 @@ public class S3assistant {
 
     public static void main(String args[]){
         S3assistant obj = new S3assistant();
-        //obj.upload("firstkey", "HelloWorld");
-        /*try{
+        obj.upload("firstkey", "HelloWorld");
+        try{
             File file = new File("helloworld");
             System.out.println(file.getAbsolutePath());
-            obj.upload("secondkey", file);
+            obj.upload("firstkey", file);
         }catch (Exception e){
             e.printStackTrace();
-        }*/
-        //obj.upload("secondkey", file);
+        }
+        //obj.upload("firstkey", "");
+        //obj.upload("thirdkey", file);
         //System.out.println(file.getAbsolutePath());
         //obj.delete("firstkey");
         //obj.delete("secondkey");

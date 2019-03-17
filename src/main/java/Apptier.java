@@ -1,8 +1,7 @@
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.sqs.model.Message;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -10,12 +9,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-
 
 
 public class Apptier {
@@ -23,7 +17,8 @@ public class Apptier {
     public SQSmonitor sqs;
     public S3assistant s3;
     private static final String url = "http://206.207.50.7/getvideo";
-    private static final String dir = "/Users/minghaowei/Desktop/546";
+    private static final String dir = "/home/ubuntu/darknet";
+    private static final String weight_path = "/home/ubuntu/darknet/tiny.weights";
     private static final int BUFFER_SIZE = 4096;
 
 
@@ -92,6 +87,15 @@ public class Apptier {
     public static void main(String args[]){
         Apptier app = new Apptier();
 
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec("Xvfb :1 & export DISPLAY=:1");
+            process.waitFor();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
 
         while(true){
             Duration duration = Duration.between(app.lastCheckTime, LocalDateTime.now());
@@ -109,7 +113,26 @@ public class Apptier {
                 System.out.println("File " + fname +" downloaded--------");
                 app.s3.upload(app.sqs.requestBody, fname);
                 System.out.println("File uploaded to S3-----------------");
-                app.sqs.sendResponse(app.sqs.requestBody);
+                String currentLine = "";
+                try {
+                    String command = "/home/ubuntu/darknet/darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg " + weight_path +" "
+                            + dir + "/" + fname + "  -dont_show > result";
+                    process = Runtime.getRuntime().exec(command);
+                    process.waitFor();
+                    process = Runtime.getRuntime().exec("python " + dir + "/darknet.py");
+                    process.waitFor();
+                    BufferedReader reader = new BufferedReader(new FileReader(dir + "/result_label"));
+                    currentLine = reader.readLine();
+                    reader.close();
+                    System.out.println(currentLine);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (IOException e){
+                    e.printStackTrace();
+                }
+
+
+                app.sqs.sendResponse(app.sqs.requestBody+","+fname+","+currentLine);
                 System.out.println("Response sent\n\n\n");
                 app.lastCheckTime = LocalDateTime.now();
                 TimeUnit.SECONDS.sleep(1);
