@@ -26,6 +26,7 @@ public class ScaleDownTest {
         return messages;
     }
 
+
     public static void main(String[] args){
 
         ScaleDownTest sample = new ScaleDownTest();
@@ -43,6 +44,7 @@ public class ScaleDownTest {
                 sample.dateTime = LocalDateTime.now();
             }
             else{
+
                 long l = Duration.between( sample.dateTime,LocalDateTime.now()).getSeconds();
                 Log.Log(Long.toString(l));
                 if( l> 3){

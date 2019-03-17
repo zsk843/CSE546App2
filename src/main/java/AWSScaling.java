@@ -6,6 +6,8 @@ import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -14,23 +16,41 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 
 
 public class AWSScaling{
+
+    // Parameters
     private static final String QUEUE_NAME = "bbQueue";
     private static final int MAX_NUM_INSTANCES = 5;
     private static final String INSTANCE_NAME_PRE = "app-instance";
-
     private static final String IMAGE_ID = "ami-0e355297545de2f82";
+    private static final int QUEUE_TIME_OUT_SEC = 5;
+
+    // AWS Service Clients
     private AmazonEC2 ec2;
-    private int instanceNum = 0;
-    private boolean[] instanceNumLst = null;
+    private AmazonSQS sqs ;
 
-    public AWSScaling(){
+    // Naming Availability Array
+    private boolean[] instanceNumLst;
 
+    // Time out tracking value
+    private LocalDateTime lastedChanged;
+    private int lastQueueSize;
+
+
+
+    // Constructor, initialization
+    private AWSScaling(){
+
+        sqs =  AmazonSQSClientBuilder.defaultClient();
         ec2 = AmazonEC2ClientBuilder.defaultClient();
         instanceNumLst = new boolean[MAX_NUM_INSTANCES];
         for(int i = 0; i < MAX_NUM_INSTANCES; i++)
             instanceNumLst[i] = true;
+        lastQueueSize = 0;
+        lastedChanged = LocalDateTime.now();
     }
 
+    // Find out an available instance number for creating instance
+    // The number bucket will set unavailable when it is found out
     private int getAvailableNum(){
         int i = 0;
         while(i< MAX_NUM_INSTANCES){
@@ -44,12 +64,25 @@ public class AWSScaling{
         return i;
     }
 
-    public void scaleApplication() {
+    // Scale the app tier based on the size of the queue
+    // Terminate the unused instances
+    private void scaleApplication() {
 
         int queueSize = getSQSLength();
-        int requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
-
+        LocalDateTime currentTime = LocalDateTime.now();
         List<Instance> instances = this.getAllInstances();
+        int requiredNum;
+
+        if(queueSize == lastQueueSize &&
+                Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC){
+            requiredNum = Math.min(queueSize+instances.size(), MAX_NUM_INSTANCES);
+        }
+        else {
+            requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
+            lastQueueSize = queueSize;
+            lastedChanged = LocalDateTime.now();
+        }
+
         int runningNum = 0;
         LinkedList<Instance> stoppedInstance = new LinkedList<Instance>();
         for(Instance i: instances){
@@ -138,7 +171,7 @@ public class AWSScaling{
 
     }
 
-
+    // Testing only
     public void sendMsg() {
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
         String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
@@ -149,17 +182,16 @@ public class AWSScaling{
         System.out.println("send a msg");
     }
 
-
-    public int getSQSLength(){
-        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+    // Get the length of the SQS queue
+    private int getSQSLength(){
         GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(QUEUE_NAME);
         GetQueueAttributesResult res = sqs.getQueueAttributes(request);
         Map<String,String> res_s = res.getAttributes();
         return Integer.parseInt(res_s.get("ApproximateNumberOfMessages"));
-
     }
 
-    public List<Instance> getAllInstances(){
+    //Get all the information of the instances
+    private List<Instance> getAllInstances(){
 
         AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
 
@@ -182,10 +214,10 @@ public class AWSScaling{
         return instances;
     }
 
+
     public static void main(String[] args)
     {
         AWSScaling sqsExample = new AWSScaling();
-
 //        for (int i = 0; i < 10; i++)
 //            sqsExample.sendMsg();
         sqsExample.scaleApplication();
