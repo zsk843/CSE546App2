@@ -3,6 +3,8 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.*;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
+import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.Tag;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -14,13 +16,32 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 public class AWSScaling{
     private static final String QUEUE_NAME = "bbQueue";
     private static final int MAX_NUM_INSTANCES = 5;
+    private static final String INSTANCE_NAME_PRE = "app-instance";
 
-    private static final String IMAGE_ID = "ami-0b30c5f01b371639f";
+    private static final String IMAGE_ID = "ami-0e355297545de2f82";
     private AmazonEC2 ec2;
+    private int instanceNum = 0;
+    private boolean[] instanceNumLst = null;
 
     public AWSScaling(){
 
         ec2 = AmazonEC2ClientBuilder.defaultClient();
+        instanceNumLst = new boolean[MAX_NUM_INSTANCES];
+        for(int i = 0; i < MAX_NUM_INSTANCES; i++)
+            instanceNumLst[i] = true;
+    }
+
+    private int getAvailableNum(){
+        int i = 0;
+        while(i< MAX_NUM_INSTANCES){
+            if (instanceNumLst[i]) {
+                instanceNumLst[i] = false;
+                break;
+            }
+            else
+                i++;
+        }
+        return i;
     }
 
     public void scaleApplication() {
@@ -32,9 +53,13 @@ public class AWSScaling{
         int runningNum = 0;
         LinkedList<Instance> stoppedInstance = new LinkedList<Instance>();
         for(Instance i: instances){
+            int instanceNo = Integer.parseInt(i.getTags().get(0).getValue().substring(12));
+            instanceNumLst[instanceNo] = false;
             String stateName = i.getState().getName().toLowerCase();
-            if(stateName.equals( "running"))
-                runningNum ++;
+            if(stateName.equals( "running")) {
+                runningNum++;
+
+            }
             else if(stateName.equals("stopping")|| stateName.equals("stopped"))
                 stoppedInstance.add(i);
         }
@@ -62,66 +87,74 @@ public class AWSScaling{
 
                 StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(i.getInstanceId());
                 ec2.startInstances(request);
-                Log.Log("Restarting Instance");
+                Log.Log("Restarting Instance " + i.getTags().get(0).getValue());
                 addNum--;
                 if(addNum <= 0)
                     break;
             }
+
             while(addNum > 0){
                 RunInstancesRequest rir = new RunInstancesRequest(IMAGE_ID,
                         1, 1);
                 rir.setInstanceType("t2.micro");
-                ec2.runInstances(rir);
+                RunInstancesResult response = ec2.runInstances(rir);
 
-                addNum -- ;
+                String instance_id = response.getReservation().getInstances().get(0).getInstanceId();
+
+                List<String> idLst = new LinkedList<String>();
+                idLst.add(instance_id);
+                List<Tag> tagLst = new LinkedList<Tag>();
+
+                Tag tag = new Tag("Name", INSTANCE_NAME_PRE+getAvailableNum());
+                tagLst.add(tag);
+
+                CreateTagsRequest tag_request = new CreateTagsRequest();
+                tag_request.setTags(tagLst);
+                tag_request.setResources(idLst);
+
+                try {
+                    ec2.createTags(tag_request);
+
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                addNum--;
+                Log.Log("Starting Instance");
+            }
+
+            if(stoppedInstance.size() > 0){
+                for(Instance ins: stoppedInstance){
+                    int instanceNo = Integer.parseInt(ins.getTags().get(0).getValue().substring(12));
+                    TerminateInstancesRequest request = new TerminateInstancesRequest().
+                            withInstanceIds(ins.getInstanceId());//terminate instance using the instance id
+                    ec2.terminateInstances(request);
+                    instanceNumLst[instanceNo] = true;
+                }
+
             }
         }
 
     }
 
-//    public void createQueue() {
-//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//        try {
-//            CreateQueueRequest createQueueRequest =
-//                    new CreateQueueRequest(QUEUE_NAME);
-//            String myQueueUrl = sqs.createQueue(createQueueRequest)
-//                    .getQueueUrl();
-//            System.out.println(myQueueUrl);
-//        } catch (AmazonSQSException e) {
-//            if (!e.getErrorCode().equals("QueueAlreadyExists")) {
-//                throw e;
-//            }
-//        }
-//    }
 
-//    public void sendMsg() {
-//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-//        SendMessageRequest send_msg_request = new SendMessageRequest()
-//                .withQueueUrl(queueUrl)
-//                .withMessageBody("hello world");
-//        sqs.sendMessage(send_msg_request);
-//        System.out.println("send a msg");
-//    }
+    public void sendMsg() {
+        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
+        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
+        SendMessageRequest send_msg_request = new SendMessageRequest()
+                .withQueueUrl(queueUrl)
+                .withMessageBody("hello world");
+        sqs.sendMessage(send_msg_request);
+        System.out.println("send a msg");
+    }
 
-//    public void receiveMsg() {
-//        final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-//        String queueUrl = sqs.getQueueUrl(QUEUE_NAME).getQueueUrl();
-//
-//        List<Message> messages = sqs.receiveMessage(queueUrl).getMessages();
-//        for (Message m : messages) {
-//            System.out.println(m.getBody());
-//            sqs.deleteMessage(queueUrl, m.getReceiptHandle());
-//        }
-//
-//        System.out.println("deleted msgs");
-//    }
 
     public int getSQSLength(){
         final AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
         GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(QUEUE_NAME);
         GetQueueAttributesResult res = sqs.getQueueAttributes(request);
-        java.util.Map<java.lang.String, java.lang.String> res_s = res.getAttributes();
+        Map<String,String> res_s = res.getAttributes();
         return Integer.parseInt(res_s.get("ApproximateNumberOfMessages"));
 
     }
@@ -143,21 +176,20 @@ public class AWSScaling{
             request.setNextToken(response.getNextToken());
             if (response.getNextToken() == null)
                 break;
-            for(Instance i:instances){
-                System.out.println(i.getTags());
-            }
 
         }
 
         return instances;
-
-
     }
 
     public static void main(String[] args)
     {
         AWSScaling sqsExample = new AWSScaling();
+
+//        for (int i = 0; i < 10; i++)
+//            sqsExample.sendMsg();
         sqsExample.scaleApplication();
+
 
 
        
