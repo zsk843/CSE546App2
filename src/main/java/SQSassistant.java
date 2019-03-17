@@ -3,6 +3,7 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.model.*;
 import com.amazonaws.services.sqs.model.Message;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class SQSassistant {
@@ -35,9 +36,11 @@ public class SQSassistant {
 
     public static void main(String args[]){
         SQSassistant obj = new SQSassistant();
-        obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "New Message For Test!!!!");
-        List<Message> mylist = obj.getMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", 1);
-        System.out.println(mylist.get(0).getBody().toString());
-        obj.deleteMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue",mylist.get(0).getReceiptHandle());
+        obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "test"+ LocalDateTime.now().toString());
+        obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "test1"+ LocalDateTime.now().toString());
+
+        //List<Message> mylist = obj.getMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", 1);
+        //System.out.println(mylist.get(0).getBody().toString());
+        //obj.deleteMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue",mylist.get(0).getReceiptHandle());
     }
 }
