@@ -117,8 +117,10 @@ public class Apptier {
                 String currentLine = "";
 
                 try {
-                    String command = "/home/ubuntu/darknet/darknet detector demo /home/ubuntu/darknet/cfg/coco.data /home/ubuntu/darknet/cfg/yolov3-tiny.cfg " + weight_path +" "
-                            + dir + "/" + fname + "  -dont_show > /home/ubuntu/darknet/result";
+                    process = Runtime.getRuntime().exec("cd /home/ubuntu/darknet/");
+                    process.waitFor();
+                    String command = "./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg " + weight_path +" "
+                            + dir + "/" + fname + "  -dont_show > result";
                     System.out.println(command);
                     process = Runtime.getRuntime().exec(command);
                     process.waitFor();
