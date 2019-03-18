@@ -85,6 +85,7 @@ public class Apptier {
 
     public static void main(String args[]){
         Apptier app = new Apptier();
+        boolean ifShuDown = args.length == 0;
 
         Process process = null;
         try {
@@ -101,7 +102,7 @@ public class Apptier {
 
             try{
 
-                if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag()){
+                if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag() && ifShuDown){
                     System.out.println("System shut down");
                     Runtime.getRuntime().exec("sudo shutdown -h now");
                     System.exit(0);
