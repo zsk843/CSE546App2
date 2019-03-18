@@ -121,7 +121,7 @@ public class Apptier {
                     File tmpFile = new File(dir+"/"+"video.h264");
                     videoFile.renameTo(tmpFile);
 
-                    process = Runtime.getRuntime().exec("cd /home/ubuntu/darknet/");
+                    process = Runtime.getRuntime().exec("/home/ubuntu/detection.sh");
                     process.waitFor();
 
                     // Read Output of the Bash
