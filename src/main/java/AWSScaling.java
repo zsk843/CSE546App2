@@ -15,18 +15,18 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 
 
-public class AWSScaling{
+public class AWSScaling {
 
     // Parameters
-    private static final String QUEUE_NAME = "bbQueue";
+    private static final String QUEUE_NAME = "request-queue";
     private static final int MAX_NUM_INSTANCES = 5;
     private static final String INSTANCE_NAME_PRE = "app-instance";
-    private static final String IMAGE_ID = "ami-0e355297545de2f82";
+    private static final String IMAGE_ID = "ami-0d6285f03741fbf35";
     private static final int QUEUE_TIME_OUT_SEC = 5;
 
     // AWS Service Clients
     private AmazonEC2 ec2;
-    private AmazonSQS sqs ;
+    private AmazonSQS sqs;
 
     // Naming Availability Array
     private boolean[] instanceNumLst;
@@ -36,14 +36,13 @@ public class AWSScaling{
     private int lastQueueSize;
 
 
-
     // Constructor, initialization
-    private AWSScaling(){
+    private AWSScaling() {
 
-        sqs =  AmazonSQSClientBuilder.defaultClient();
+        sqs = AmazonSQSClientBuilder.defaultClient();
         ec2 = AmazonEC2ClientBuilder.defaultClient();
         instanceNumLst = new boolean[MAX_NUM_INSTANCES];
-        for(int i = 0; i < MAX_NUM_INSTANCES; i++)
+        for (int i = 0; i < MAX_NUM_INSTANCES; i++)
             instanceNumLst[i] = true;
         lastQueueSize = 0;
         lastedChanged = LocalDateTime.now();
@@ -51,14 +50,13 @@ public class AWSScaling{
 
     // Find out an available instance number for creating instance
     // The number bucket will set unavailable when it is found out
-    private int getAvailableNum(){
+    private int getAvailableNum() {
         int i = 0;
-        while(i< MAX_NUM_INSTANCES){
+        while (i < MAX_NUM_INSTANCES) {
             if (instanceNumLst[i]) {
                 instanceNumLst[i] = false;
                 break;
-            }
-            else
+            } else
                 i++;
         }
         return i;
@@ -73,11 +71,10 @@ public class AWSScaling{
         List<Instance> instances = this.getAllInstances();
         int requiredNum;
 
-        if(queueSize == lastQueueSize &&
-                Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC){
-            requiredNum = Math.min(queueSize+instances.size(), MAX_NUM_INSTANCES);
-        }
-        else {
+        if (queueSize == lastQueueSize &&
+                Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
+            requiredNum = Math.min(queueSize + instances.size(), MAX_NUM_INSTANCES);
+        } else {
             requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
             lastQueueSize = queueSize;
             lastedChanged = LocalDateTime.now();
@@ -85,24 +82,31 @@ public class AWSScaling{
 
         int runningNum = 0;
         LinkedList<Instance> stoppedInstance = new LinkedList<Instance>();
-        for(Instance i: instances){
-            int instanceNo = Integer.parseInt(i.getTags().get(0).getValue().substring(12));
-            instanceNumLst[instanceNo] = false;
-            String stateName = i.getState().getName().toLowerCase();
-            if(stateName.equals( "running")) {
-                runningNum++;
+        for (Instance i : instances) {
 
+            String stateName = i.getState().getName().toLowerCase();
+            String instanceName = i.getTags().get(0).getValue();
+            if (instanceName.startsWith("app-instance")) {
+                if (stateName.equals("running") || stateName.equals("pending")) {
+                    runningNum++;
+                    int instanceNo = Integer.parseInt(i.getTags().get(0).getValue().substring(12));
+                    instanceNumLst[instanceNo] = false;
+
+                } else if (stateName.equals("stopping") || stateName.equals("stopped")) {
+                    stoppedInstance.add(i);
+                    int instanceNo = Integer.parseInt(i.getTags().get(0).getValue().substring(12));
+
+                    instanceNumLst[instanceNo] = false;
+                }
             }
-            else if(stateName.equals("stopping")|| stateName.equals("stopped"))
-                stoppedInstance.add(i);
         }
 
-        if(runningNum < requiredNum){
+        if (runningNum < requiredNum) {
             int addNum = requiredNum - runningNum;
-            while(stoppedInstance.size()>0) {
+            while (stoppedInstance.size() > 0) {
                 Instance i = stoppedInstance.get(0);
                 stoppedInstance.removeFirst();
-                if(i.getState().getName().toLowerCase().equals("stopping")) {
+                if (i.getState().getName().toLowerCase().equals("stopping")) {
                     String status = "stopping";
                     do {
                         try {
@@ -115,18 +119,18 @@ public class AWSScaling{
                         DescribeInstancesResult res = ec2.describeInstances(desRequest);
 
                         status = res.getReservations().get(0).getInstances().get(0).getState().getName().toLowerCase();
-                    }while (status.equals("stopping"));
+                    } while (status.equals("stopping"));
                 }
 
                 StartInstancesRequest request = new StartInstancesRequest().withInstanceIds(i.getInstanceId());
                 ec2.startInstances(request);
                 Log.Log("Restarting Instance " + i.getTags().get(0).getValue());
                 addNum--;
-                if(addNum <= 0)
+                if (addNum <= 0)
                     break;
             }
 
-            while(addNum > 0){
+            while (addNum > 0) {
                 RunInstancesRequest rir = new RunInstancesRequest(IMAGE_ID,
                         1, 1);
                 rir.setInstanceType("t2.micro");
@@ -138,7 +142,7 @@ public class AWSScaling{
                 idLst.add(instance_id);
                 List<Tag> tagLst = new LinkedList<Tag>();
 
-                Tag tag = new Tag("Name", INSTANCE_NAME_PRE+getAvailableNum());
+                Tag tag = new Tag("Name", INSTANCE_NAME_PRE + getAvailableNum());
                 tagLst.add(tag);
 
                 CreateTagsRequest tag_request = new CreateTagsRequest();
@@ -148,8 +152,7 @@ public class AWSScaling{
                 try {
                     ec2.createTags(tag_request);
 
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -157,16 +160,16 @@ public class AWSScaling{
                 Log.Log("Starting Instance");
             }
 
-            if(stoppedInstance.size() > 0){
-                for(Instance ins: stoppedInstance){
-                    int instanceNo = Integer.parseInt(ins.getTags().get(0).getValue().substring(12));
-                    TerminateInstancesRequest request = new TerminateInstancesRequest().
-                            withInstanceIds(ins.getInstanceId());//terminate instance using the instance id
-                    ec2.terminateInstances(request);
-                    instanceNumLst[instanceNo] = true;
-                }
-
-            }
+//            if (stoppedInstance.size() > 0) {
+//                for (Instance ins : stoppedInstance) {
+//                    int instanceNo = Integer.parseInt(ins.getTags().get(0).getValue().substring(12));
+//                    TerminateInstancesRequest request = new TerminateInstancesRequest().
+//                            withInstanceIds(ins.getInstanceId());//terminate instance using the instance id
+//                    ec2.terminateInstances(request);
+//                    instanceNumLst[instanceNo] = true;
+//                }
+//
+//            }
         }
 
     }
@@ -183,15 +186,15 @@ public class AWSScaling{
     }
 
     // Get the length of the SQS queue
-    private int getSQSLength(){
+    private int getSQSLength() {
         GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(QUEUE_NAME);
         GetQueueAttributesResult res = sqs.getQueueAttributes(request);
-        Map<String,String> res_s = res.getAttributes();
+        Map<String, String> res_s = res.getAttributes();
         return Integer.parseInt(res_s.get("ApproximateNumberOfMessages"));
     }
 
     //Get all the information of the instances
-    private List<Instance> getAllInstances(){
+    private List<Instance> getAllInstances() {
 
         AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
 
@@ -201,7 +204,7 @@ public class AWSScaling{
         while (true) {
 
             DescribeInstancesResult response = ec2.describeInstances(request);
-            for (Reservation rev: response.getReservations()) {
+            for (Reservation rev : response.getReservations()) {
                 instances.addAll(rev.getInstances());
             }
 
@@ -215,16 +218,16 @@ public class AWSScaling{
     }
 
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws InterruptedException {
         AWSScaling sqsExample = new AWSScaling();
 //        for (int i = 0; i < 10; i++)
 //            sqsExample.sendMsg();
-        sqsExample.scaleApplication();
+        while (true) {
+            sqsExample.scaleApplication();
+            TimeUnit.SECONDS.sleep(1);
+            Log.Log("Loop complete");
+        }
 
-
-
-       
 
     }
 }
