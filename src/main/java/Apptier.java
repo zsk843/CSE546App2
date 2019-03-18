@@ -19,9 +19,7 @@ public class Apptier {
     public S3assistant s3;
     private static final String url = "http://206.207.50.7/getvideo";
     private static final String dir = "/home/ubuntu/darknet";
-    private static final String weight_path = "/home/ubuntu/darknet/tiny.weights";
     private static final int BUFFER_SIZE = 4096;
-
 
     public Apptier(){
         lastCheckTime = LocalDateTime.now();
@@ -100,11 +98,15 @@ public class Apptier {
 
         while(true){
             Duration duration = Duration.between(app.lastCheckTime, LocalDateTime.now());
-            if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag()){
-                System.out.println("System shut down");
-                break;
-            }
+
             try{
+
+                if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag()){
+                    System.out.println("System shut down");
+                    Runtime.getRuntime().exec("sudo shutdown -h now");
+                    System.exit(0);
+                }
+
                 Message msg = app.sqs.getRequest();
                 if(msg==null){
                     continue;
