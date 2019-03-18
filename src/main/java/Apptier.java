@@ -117,20 +117,19 @@ public class Apptier {
                 String currentLine = "";
 
                 try {
+                    File videoFile = new File(dir+"/"+fname);
+                    File tmpFile = new File(dir+"/"+"video.h264");
+                    videoFile.renameTo(tmpFile);
+
                     process = Runtime.getRuntime().exec("cd /home/ubuntu/darknet/");
                     process.waitFor();
-                    String command = "./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg " + weight_path +" "
-                            + dir + "/" + fname + "  -dont_show > result";
-                    System.out.println(command);
-                    process = Runtime.getRuntime().exec(command);
-                    process.waitFor();
 
-
-                    // 读取输出
+                    // Read Output of the Bash
                     BufferedReader bufrIn= new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
                     BufferedReader bufrError = new BufferedReader(new InputStreamReader(process.getErrorStream(), "UTF-8"));
                     StringBuilder result = new StringBuilder();
-                    String line = null;
+                    String line;
+
                     while ((line = bufrIn.readLine()) != null) {
                         result.append(line).append('\n');
                     }
@@ -138,12 +137,13 @@ public class Apptier {
                         result.append(line).append('\n');
                     }
                     System.out.println(result.toString());
-                    process = Runtime.getRuntime().exec("python " + dir + "/darknet.py");
-                    process.waitFor();
+
                     BufferedReader reader = new BufferedReader(new FileReader(dir + "/result_label"));
                     currentLine = reader.readLine();
                     reader.close();
                     System.out.println(currentLine);
+                    tmpFile.delete();
+
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e){

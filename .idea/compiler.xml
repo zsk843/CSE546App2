@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="AWSCSE546P1" />
         <module name="AWSCSE546Project1" />
+        <module name="CSE546App" />
       </profile>
     </annotationProcessing>
   </component>
