@@ -121,7 +121,7 @@ public class Apptier {
                 try {
                     File videoFile = new File(dir+"/"+fname);
                     File tmpFile = new File(dir+"/"+"video.h264");
-                    videoFile.renameTo(tmpFile);
+                    if(videoFile.renameTo(tmpFile)) Log.Log("File name changed!");
 
                     process = Runtime.getRuntime().exec("/home/ubuntu/detection.sh");
                     process.waitFor();
@@ -144,7 +144,7 @@ public class Apptier {
                     currentLine = reader.readLine();
                     reader.close();
                     System.out.println(currentLine);
-                    tmpFile.delete();
+                    if(tmpFile.delete()) Log.Log("File deleted!");
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
