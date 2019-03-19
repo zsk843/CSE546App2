@@ -117,7 +117,7 @@ public class Apptier {
                 String fname = downloadFile(url, dir);
                 System.out.println("File " + fname +" downloaded--------");
                 File file = new File(fname);
-                app.s3.upload(app.sqs.requestBody, file);
+                app.s3.upload(fname, file);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
 
@@ -147,7 +147,7 @@ public class Apptier {
                     currentLine = reader.readLine();
                     reader.close();
                     System.out.println(currentLine);
-                    app.s3.upload(fname, currentLine);
+                    app.s3.uploadResult(fname, currentLine);
                     if(tmpFile.delete()) Log.Log("File deleted!");
 
                 } catch (InterruptedException e) {
