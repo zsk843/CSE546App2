@@ -219,13 +219,11 @@ public class AWSScaling {
 
 
     public static void main(String[] args) throws InterruptedException {
+
         AWSScaling sqsExample = new AWSScaling();
-//        for (int i = 0; i < 10; i++)
-//            sqsExample.sendMsg();
         while (true) {
             sqsExample.scaleApplication();
-            TimeUnit.SECONDS.sleep(1);
-            Log.Log("Loop complete");
+//            TimeUnit.SECONDS.sleep(1);
         }
 
 
