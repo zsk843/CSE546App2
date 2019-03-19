@@ -71,7 +71,7 @@ public class AWSScaling {
         List<Instance> instances = this.getAllInstances();
         int requiredNum;
 
-        if (queueSize == lastQueueSize &&
+        if (queueSize >= lastQueueSize &&
                 Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
             requiredNum = Math.min(queueSize + instances.size(), MAX_NUM_INSTANCES);
         } else {
