@@ -4,6 +4,7 @@ import com.amazonaws.services.sqs.model.Message;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.io.File;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -115,7 +116,8 @@ public class Apptier {
                 System.out.println("Request receive----------------");
                 String fname = downloadFile(url, dir);
                 System.out.println("File " + fname +" downloaded--------");
-                app.s3.upload(app.sqs.requestBody, fname);
+                File file = new File(fname)
+                app.s3.upload(app.sqs.requestBody, file);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
 
@@ -145,6 +147,7 @@ public class Apptier {
                     currentLine = reader.readLine();
                     reader.close();
                     System.out.println(currentLine);
+                    app.s3.upload(fname, currentLine);
                     if(tmpFile.delete()) Log.Log("File deleted!");
 
                 } catch (InterruptedException e) {
