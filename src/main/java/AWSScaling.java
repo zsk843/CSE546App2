@@ -223,7 +223,7 @@ public class AWSScaling {
         AWSScaling sqsExample = new AWSScaling();
         while (true) {
             sqsExample.scaleApplication();
-//            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.SECONDS.sleep(1);
         }
 
 
