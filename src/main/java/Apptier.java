@@ -116,7 +116,7 @@ public class Apptier {
                 System.out.println("Request receive----------------");
                 String fname = downloadFile(url, dir);
                 System.out.println("File " + fname +" downloaded--------");
-                File file = new File(fname)
+                File file = new File(fname);
                 app.s3.upload(app.sqs.requestBody, file);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
