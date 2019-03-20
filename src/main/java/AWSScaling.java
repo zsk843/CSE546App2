@@ -112,7 +112,7 @@ public class AWSScaling {
 
 
         if (runningNum + pendingNum < requiredNum) {
-            int addNum = requiredNum - runningNum;
+            int addNum = requiredNum - runningNum - pendingNum;
             while (stoppedInstance.size() > 0) {
                 Instance i = stoppedInstance.get(0);
                 stoppedInstance.removeFirst();
