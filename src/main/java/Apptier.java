@@ -19,7 +19,7 @@ public class Apptier {
     public SQSmonitor sqs;
     public S3assistant s3;
     private static final String url = "http://206.207.50.7/getvideo";
-    private static final String dir = "/home/ubuntu/darknet";
+    private static final String dir = "D:";
     private static final int BUFFER_SIZE = 4096;
 
     public Apptier(){
@@ -105,7 +105,7 @@ public class Apptier {
                 System.out.println("Request receive----------------");
                 String fname = downloadFile(url, dir);
                 System.out.println("File " + fname +" downloaded--------");
-                File file = new File(fname);
+                File file = new File(dir+File.separator+fname);
                 app.s3.upload(fname, file);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
