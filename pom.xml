@@ -27,7 +27,7 @@
                     <archive>
                         <manifest>
                             <!-- 此处指定main方法入口的class -->
-                            <mainClass>Apptier</mainClass>
+                            <mainClass>DoubleAppTier</mainClass>
                         </manifest>
                     </archive>
                     </configuration>
