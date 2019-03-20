@@ -21,7 +21,7 @@ public class AWSScaling {
     private static final String QUEUE_NAME = "request-queue";
     private static final int MAX_NUM_INSTANCES = 20;
     private static final String INSTANCE_NAME_PRE = "app-instance";
-    private static final String IMAGE_ID = "ami-05acbf47bb3bf5899";
+    private static final String IMAGE_ID = "ami-037f40fe9ba9ee098";
     private static final int QUEUE_TIME_OUT_SEC = 5;
 
     // AWS Service Clients
