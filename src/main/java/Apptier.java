@@ -112,7 +112,6 @@ public class Apptier {
 
                 try {
                     Log.Log("Dealing...");
-                    TimeUnit.SECONDS.sleep(20);
                     File videoFile = new File(dir+"/"+fname);
                     File tmpFile = new File(dir+"/"+"video.h264");
                     if(videoFile.renameTo(tmpFile)) Log.Log("File name changed!");
