@@ -49,7 +49,6 @@ public class SQSmonitor {
                 return null;
             }
         }else{
-            System.out.println("Request Handling");
             return null;
         }
     }
