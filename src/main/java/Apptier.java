@@ -19,7 +19,7 @@ public class Apptier {
     public SQSmonitor sqs;
     public S3assistant s3;
     private static final String url = "http://206.207.50.7/getvideo";
-    private static final String dir = "/home/ubuntu/darknet";
+    private static final String dir = "D:";
     private static final int BUFFER_SIZE = 4096;
 
     public Apptier(){
@@ -45,8 +45,7 @@ public class Apptier {
                 // extracts file name from header field
                 int index = disposition.indexOf("filename=");
                 if (index > 0) {
-                    fileName = disposition.substring(index + 10,
-                            disposition.length() - 1);
+                    fileName = disposition.substring(index + 9);
                 }
             } else {
                 // extracts file name from URL
@@ -87,22 +86,12 @@ public class Apptier {
     public static void main(String args[]){
         Apptier app = new Apptier();
         boolean ifShuDown = args.length == 0;
-
-        Process process = null;
-        try {
-            process = Runtime.getRuntime().exec("Xvfb :1 & export DISPLAY=:1");
-            process.waitFor();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (IOException e){
-            e.printStackTrace();
-        }
+        Process process;
 
         while(true){
             Duration duration = Duration.between(app.lastCheckTime, LocalDateTime.now());
 
             try{
-
                 if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag() && ifShuDown){
                     System.out.println("System shut down");
                     Runtime.getRuntime().exec("sudo shutdown -h now");
@@ -122,6 +111,8 @@ public class Apptier {
                 String currentLine = "";
 
                 try {
+                    Log.Log("Dealing...");
+                    TimeUnit.SECONDS.sleep(20);
                     File videoFile = new File(dir+"/"+fname);
                     File tmpFile = new File(dir+"/"+"video.h264");
                     if(videoFile.renameTo(tmpFile)) Log.Log("File name changed!");
@@ -152,10 +143,7 @@ public class Apptier {
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                } catch (IOException e){
-                    e.printStackTrace();
                 }
-
 
                 app.sqs.sendResponse(app.sqs.requestBody+","+fname+","+currentLine);
                 System.out.println("Response sent\n\n\n");
