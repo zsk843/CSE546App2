@@ -19,7 +19,7 @@ public class AWSScaling {
 
     // Parameters
     private static final String QUEUE_NAME = "request-queue";
-    private static final int MAX_NUM_INSTANCES = 5;
+    private static final int MAX_NUM_INSTANCES = 20;
     private static final String INSTANCE_NAME_PRE = "app-instance";
     private static final String IMAGE_ID = "ami-05acbf47bb3bf5899";
     private static final int QUEUE_TIME_OUT_SEC = 5;
@@ -69,18 +69,9 @@ public class AWSScaling {
         int queueSize = getSQSLength();
         LocalDateTime currentTime = LocalDateTime.now();
         List<Instance> instances = this.getAllInstances();
-        int requiredNum;
-
-        if (queueSize >= lastQueueSize &&
-                Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
-            requiredNum = Math.min(queueSize + instances.size(), MAX_NUM_INSTANCES);
-        } else {
-            requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
-            lastQueueSize = queueSize;
-            lastedChanged = LocalDateTime.now();
-        }
 
         int runningNum = 0;
+        int pendingNum = 0;
         LinkedList<Instance> stoppedInstance = new LinkedList<Instance>();
         for (Instance i : instances) {
 
@@ -88,7 +79,10 @@ public class AWSScaling {
             String instanceName = i.getTags().get(0).getValue();
             if (instanceName.startsWith("app-instance")) {
                 if (stateName.equals("running") || stateName.equals("pending")) {
-                    runningNum++;
+                    if (stateName.equals("running"))
+                        runningNum++;
+                    else
+                        pendingNum++;
                     int instanceNo = Integer.parseInt(i.getTags().get(0).getValue().substring(12));
                     instanceNumLst[instanceNo] = false;
 
@@ -101,7 +95,23 @@ public class AWSScaling {
             }
         }
 
-        if (runningNum < requiredNum) {
+
+        int requiredNum;
+
+        if (queueSize >= lastQueueSize &&
+                Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
+            requiredNum = Math.min(queueSize + runningNum, MAX_NUM_INSTANCES);
+            lastedChanged = LocalDateTime.now();
+            lastQueueSize = queueSize;
+
+        } else {
+            requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
+            lastQueueSize = queueSize;
+            lastedChanged = LocalDateTime.now();
+        }
+
+
+        if (runningNum + pendingNum < requiredNum) {
             int addNum = requiredNum - runningNum;
             while (stoppedInstance.size() > 0) {
                 Instance i = stoppedInstance.get(0);
@@ -187,7 +197,7 @@ public class AWSScaling {
 
     // Get the length of the SQS queue
     private int getSQSLength() {
-        GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(QUEUE_NAME);
+        GetQueueAttributesRequest request = new GetQueueAttributesRequest().withAttributeNames("ApproximateNumberOfMessages").withQueueUrl(sqs.getQueueUrl(QUEUE_NAME).getQueueUrl());
         GetQueueAttributesResult res = sqs.getQueueAttributes(request);
         Map<String, String> res_s = res.getAttributes();
         return Integer.parseInt(res_s.get("ApproximateNumberOfMessages"));
