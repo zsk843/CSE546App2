@@ -41,8 +41,5 @@ public class SQSassistant {
             obj.sendMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", "test1" + LocalDateTime.now().toString());
         }
 
-        //List<Message> mylist = obj.getMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue", 1);
-        //System.out.println(mylist.get(0).getBody().toString());
-        //obj.deleteMessage("https://us-west-1.queue.amazonaws.com/738913945831/request-queue",mylist.get(0).getReceiptHandle());
     }
 }

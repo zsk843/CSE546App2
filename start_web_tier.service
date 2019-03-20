@@ -1,0 +1,12 @@
+[Unit]
+Description=start app tier
+After=syslog.target network.target remote-fs.target nss-lookup.target
+
+[Service]
+Type=forking
+ExecStart=/home/ubuntu/start_web.sh
+ExecStop=/home/ubuntu/stop_web.sh
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
