@@ -17,6 +17,7 @@ public class S3assistant {
             .standard().withRegion(Regions.US_WEST_1)
             .build();
     private final static String bucket = "darknetbucket";
+    private final static String resultbucket = "darknetresult";
 
     //upload file
     public void upload(String key, File file){
@@ -32,6 +33,15 @@ public class S3assistant {
     public void upload(String key, String content){
         try {
             s3.putObject(bucket, key, content);
+            System.out.println("Content uploaded!");
+        }catch (AmazonServiceException e){
+            System.err.println(e.getErrorMessage());
+        }
+    }
+    
+    public void uploadResult(String key, String content){
+        try {
+            s3.putObject(resultbucket, key, content);
             System.out.println("Content uploaded!");
         }catch (AmazonServiceException e){
             System.err.println(e.getErrorMessage());
