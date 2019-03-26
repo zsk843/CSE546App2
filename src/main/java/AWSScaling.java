@@ -98,7 +98,7 @@ public class AWSScaling {
 
         int requiredNum;
 
-        if(lastQueueSize > queueSize)
+        if(lastQueueSize > queueSize || queueSize == 0)
             lastedChanged = LocalDateTime.now();
 
         lastQueueSize = queueSize;
