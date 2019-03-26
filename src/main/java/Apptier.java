@@ -14,19 +14,21 @@ import java.io.FileOutputStream;
 import java.io.BufferedReader;
 
 
-public class Apptier implements Runnable{
-
+public class Apptier {
+    public LocalDateTime lastCheckTime;
+    public SQSmonitor sqs;
+    public S3assistant s3;
     private static final String url = "http://206.207.50.7/getvideo";
     private static final String dir = "/home/ubuntu/darknet";
     private static final int BUFFER_SIZE = 4096;
-    private boolean ifShuDown;
-    private int signal = 0;
 
-    public Apptier(boolean flag){
-        ifShuDown = flag;
+    public Apptier(){
+        lastCheckTime = LocalDateTime.now();
+        sqs = new SQSmonitor();
+        s3 = new S3assistant();
     }
 
-    private String downloadFile(String fileURL, String saveDir)
+    public static String downloadFile(String fileURL, String saveDir)
             throws IOException {
         URL url = new URL(fileURL);
         HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
@@ -81,40 +83,30 @@ public class Apptier implements Runnable{
 
     }
 
-    @Override
-    public void run(){
-        LocalDateTime lastCheckTime;
-        SQSmonitor sqs;
-        S3assistant s3;
+    public static void main(String args[]){
+        Apptier app = new Apptier();
+        boolean ifShuDown = args.length == 0;
         Process process;
 
-        lastCheckTime = LocalDateTime.now();
-        sqs = new SQSmonitor();
-        s3 = new S3assistant();
-
         while(true){
-            Duration duration = Duration.between(lastCheckTime, LocalDateTime.now());
+            Duration duration = Duration.between(app.lastCheckTime, LocalDateTime.now());
 
             try{
-                if(duration.getSeconds() > 5 && !sqs.getRequestFlag() && ifShuDown && signal == 0){
+                if(duration.getSeconds() > 5 && !app.sqs.getRequestFlag() && ifShuDown){
                     System.out.println("System shut down");
                     Runtime.getRuntime().exec("sudo shutdown -h now");
                     System.exit(0);
                 }
 
-                signal ++;
-                Message msg = sqs.getRequest();
+                Message msg = app.sqs.getRequest();
                 if(msg==null){
-                    signal--;
-                    TimeUnit.SECONDS.sleep(1);
                     continue;
                 }
-
                 System.out.println("Request receive----------------");
                 String fname = downloadFile(url, dir);
                 System.out.println("File " + fname +" downloaded--------");
                 File file = new File(dir+File.separator+fname);
-                s3.upload(fname, file);
+                app.s3.upload(fname, file);
                 System.out.println("File uploaded to S3-----------------");
                 String currentLine = "";
 
@@ -145,17 +137,16 @@ public class Apptier implements Runnable{
                     currentLine = reader.readLine();
                     reader.close();
                     System.out.println(currentLine);
-                    s3.uploadResult(fname, currentLine);
+                    app.s3.uploadResult(fname, currentLine);
                     if(tmpFile.delete()) Log.Log("File deleted!");
 
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
-                sqs.sendResponse(sqs.requestBody+","+fname+","+currentLine);
+                app.sqs.sendResponse(app.sqs.requestBody+","+fname+","+currentLine);
                 System.out.println("Response sent\n\n\n");
-                lastCheckTime = LocalDateTime.now();
-                signal --;
+                app.lastCheckTime = LocalDateTime.now();
                 TimeUnit.SECONDS.sleep(1);
             }catch (Exception e){
                 e.printStackTrace();
@@ -164,4 +155,3 @@ public class Apptier implements Runnable{
         }
     }
 }
-

@@ -1,3 +1,3 @@
 #!/bin/sh
-java -jar /home/ubuntu/app_tier.jar > /ubuntu/home/app_tier.log &
+java -jar /home/ubuntu/app_tier.jar > /home/ubuntu/app_tier.log &
 echo $! > /home/ubuntu/app_tier.pid
