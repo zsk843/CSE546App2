@@ -99,7 +99,7 @@ public class AWSScaling {
         int requiredNum;
 
         
-        requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
+        requiredNum = Math.min(queueSize+runningNum, MAX_NUM_INSTANCES);
 
         
 
