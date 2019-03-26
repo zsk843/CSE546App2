@@ -103,7 +103,7 @@ public class AWSScaling {
 
         lastQueueSize = queueSize;
 
-        if (Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
+        if (Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC && pendingNum<=0) {
             requiredNum = Math.min(queueSize + runningNum, MAX_NUM_INSTANCES);
             lastedChanged = LocalDateTime.now();
         } else {
