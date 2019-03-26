@@ -27,7 +27,7 @@
                     <archive>
                         <manifest>
                             <!-- 此处指定main方法入口的class -->
-                            <mainClass>AppTier</mainClass>
+                            <mainClass>AWSScaling</mainClass>
                         </manifest>
                     </archive>
                     </configuration>
