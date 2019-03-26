@@ -22,7 +22,7 @@ public class AWSScaling {
     private static final int MAX_NUM_INSTANCES = 19;
     private static final String INSTANCE_NAME_PRE = "app-instance";
     private static final String IMAGE_ID = "ami-037f40fe9ba9ee098";
-    private static final int QUEUE_TIME_OUT_SEC = 5;
+    private static final int QUEUE_TIME_OUT_SEC = 10;
 
     // AWS Service Clients
     private AmazonEC2 ec2;
@@ -98,7 +98,7 @@ public class AWSScaling {
 
         int requiredNum;
 
-        if(lastQueueSize > queueSize || queueSize == 0)
+        if(lastQueueSize > queueSize || queueSize == 0 || pendingNum > 0)
             lastedChanged = LocalDateTime.now();
 
         lastQueueSize = queueSize;
