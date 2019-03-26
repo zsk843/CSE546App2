@@ -105,8 +105,7 @@ public class AWSScaling {
 
         if (Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC) {
             requiredNum = Math.min(queueSize + runningNum, MAX_NUM_INSTANCES);
-
-
+            lastedChanged = LocalDateTime.now();
         } else {
             requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
 
