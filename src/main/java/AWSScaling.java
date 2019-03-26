@@ -98,18 +98,10 @@ public class AWSScaling {
 
         int requiredNum;
 
-        if(lastQueueSize > queueSize || queueSize == 0 || pendingNum > 0)
-            lastedChanged = LocalDateTime.now();
+        
+        requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
 
-        lastQueueSize = queueSize;
-
-        if (Duration.between(lastedChanged, currentTime).getSeconds() > QUEUE_TIME_OUT_SEC && pendingNum<=0) {
-            requiredNum = Math.min(queueSize + runningNum, MAX_NUM_INSTANCES);
-            lastedChanged = LocalDateTime.now();
-        } else {
-            requiredNum = Math.min(queueSize, MAX_NUM_INSTANCES);
-
-        }
+        
 
 
         if (runningNum + pendingNum < requiredNum) {
@@ -234,7 +226,7 @@ public class AWSScaling {
         AWSScaling sqsExample = new AWSScaling();
         while (true) {
             sqsExample.scaleApplication();
-            TimeUnit.SECONDS.sleep(1);
+            TimeUnit.SECONDS.sleep(2);
         }
 
 
